@@ -12,6 +12,14 @@ export function TicketsPage() {
   const { tickets, updateTicketStatus } = useAppContext();
   const [activeTab, setActiveTab] = useState('All');
   const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+
+  const handleSendReply = () => {
+    if (!replyText.trim() || !selectedTicket) return;
+    updateTicketStatus(selectedTicket, 'In Progress');
+    setReplyText('');
+    alert('Reply sent successfully!');
+  };
   const tabs = ['All', 'Open', 'In Progress', 'Resolved', 'Closed'];
   const filteredTickets =
   activeTab === 'All' ?
@@ -212,10 +220,14 @@ export function TicketsPage() {
             <div className="p-4 border-t border-gray-100 bg-white shrink-0">
               <div className="relative">
                 <textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
                 placeholder="Type your reply..."
                 className="w-full border border-gray-200 rounded-xl p-3 pr-12 focus:ring-2 focus:ring-burgundy focus:border-transparent outline-none resize-none h-24 text-sm" />
 
-                <button className="absolute bottom-3 right-3 p-2 bg-burgundy text-white rounded-lg hover:bg-red-800 transition-colors">
+                <button 
+                  onClick={handleSendReply}
+                  className="absolute bottom-3 right-3 p-2 bg-burgundy text-white rounded-lg hover:bg-red-800 transition-colors">
                   <SendIcon className="w-4 h-4" />
                 </button>
               </div>

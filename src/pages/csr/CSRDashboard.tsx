@@ -149,7 +149,9 @@ export function CSRDashboard() {
               Quick Actions
             </h2>
             <div className="space-y-3">
-              <button className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-red-50 hover:text-burgundy transition-colors text-navy font-medium border border-transparent hover:border-red-100">
+              <button 
+                onClick={() => navigate('csr-tickets')}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-red-50 hover:text-burgundy transition-colors text-navy font-medium border border-transparent hover:border-red-100">
                 <PlusIcon className="w-5 h-5" /> New Ticket
               </button>
               <button

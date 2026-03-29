@@ -7,6 +7,7 @@ import {
   MessageSquareIcon,
   AwardIcon } from
 'lucide-react';
+import { useAppContext } from '../../context/AppContext';
 const mockCustomers = [
 {
   id: 'u1',
@@ -30,6 +31,7 @@ const mockCustomers = [
 }];
 
 export function CSRCustomersPage() {
+  const { navigate } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(mockCustomers[0]);
   return (
@@ -89,7 +91,9 @@ export function CSRCustomersPage() {
               </h2>
               <p className="text-gray-500 mb-4">{selectedCustomer.email}</p>
               <div className="flex flex-wrap justify-center sm:justify-start gap-3">
-                <button className="flex items-center gap-2 px-4 py-2 bg-burgundy text-white rounded-lg text-sm font-medium hover:bg-red-800 transition-colors shadow-sm">
+                <button 
+                  onClick={() => navigate('csr-tickets')}
+                  className="flex items-center gap-2 px-4 py-2 bg-burgundy text-white rounded-lg text-sm font-medium hover:bg-red-800 transition-colors shadow-sm">
                   <MessageSquareIcon className="w-4 h-4" /> Create Ticket
                 </button>
                 <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">

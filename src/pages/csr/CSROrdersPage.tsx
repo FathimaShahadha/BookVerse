@@ -7,10 +7,35 @@ import {
   CreditCardIcon,
   AlertCircleIcon } from
 'lucide-react';
-import { ORDERS, BOOKS } from '../../data/mockData';
+import { useAppContext } from '../../context/AppContext';
+
 export function CSROrdersPage() {
+  const { orders, books, updateOrderStatus } = useAppContext();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedOrder, setSelectedOrder] = useState(ORDERS[0]);
+  const [selectedOrder, setSelectedOrder] = useState<typeof orders[0] | null>(orders.length > 0 ? orders[0] : null);
+  const [statusDraft, setStatusDraft] = useState('');
+  const [internalNote, setInternalNote] = useState('');
+
+  React.useEffect(() => {
+    if (selectedOrder) setStatusDraft(selectedOrder.status);
+  }, [selectedOrder]);
+
+  const handleUpdateStatus = () => {
+    if (selectedOrder && statusDraft) {
+      updateOrderStatus(selectedOrder.id, statusDraft as any);
+      setSelectedOrder({ ...selectedOrder, status: statusDraft as any });
+      alert('Order status updated successfully!');
+    }
+  };
+
+  const handleSaveNote = () => {
+    if (!internalNote.trim()) return;
+    alert('Internal note saved successfully!');
+    setInternalNote('');
+  };
+
+  if (!selectedOrder) return <div className="p-6">No orders found</div>;
+
   return (
     <div className="p-6 lg:p-8 h-[calc(100vh-4rem)] flex flex-col">
       <h1 className="font-serif text-3xl font-bold text-navy mb-6 shrink-0">
@@ -33,7 +58,7 @@ export function CSROrdersPage() {
             </div>
           </div>
           <div className="overflow-y-auto flex-1 divide-y divide-gray-100">
-            {ORDERS.map((order) =>
+            {orders.map((order) =>
             <div
               key={order.id}
               onClick={() => setSelectedOrder(order)}
@@ -77,7 +102,8 @@ export function CSROrdersPage() {
             <div className="flex items-center gap-2">
               <select
                 className="text-sm font-medium bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-burgundy"
-                defaultValue={selectedOrder.status}>
+                value={statusDraft}
+                onChange={(e) => setStatusDraft(e.target.value)}>
 
                 <option value="Processing">Processing</option>
                 <option value="Shipped">Shipped</option>
@@ -85,7 +111,9 @@ export function CSROrdersPage() {
                 <option value="Delivered">Delivered</option>
                 <option value="Cancelled">Cancelled</option>
               </select>
-              <button className="px-4 py-2 bg-burgundy text-white rounded-lg text-sm font-medium hover:bg-red-800 transition-colors shadow-sm">
+              <button 
+                onClick={handleUpdateStatus}
+                className="px-4 py-2 bg-burgundy text-white rounded-lg text-sm font-medium hover:bg-red-800 transition-colors shadow-sm">
                 Update
               </button>
             </div>
@@ -145,7 +173,7 @@ export function CSROrdersPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {selectedOrder.items.map((item, idx) => {
-                    const book = BOOKS.find((b) => b.id === item.bookId);
+                    const book = books.find((b) => b.id === item.bookId);
                     if (!book) return null;
                     return (
                       <tr key={idx}>
@@ -196,11 +224,15 @@ export function CSROrdersPage() {
                 Add Internal Note
               </h3>
               <textarea
+                value={internalNote}
+                onChange={(e) => setInternalNote(e.target.value)}
                 className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-burgundy outline-none resize-none h-20 mb-2"
                 placeholder="Type note here..." />
 
               <div className="flex justify-end">
-                <button className="px-4 py-1.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+                <button 
+                  onClick={handleSaveNote}
+                  className="px-4 py-1.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
                   Save Note
                 </button>
               </div>

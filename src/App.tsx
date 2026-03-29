@@ -27,6 +27,8 @@ import { CSRDashboard } from './pages/csr/CSRDashboard';
 import { TicketsPage } from './pages/csr/TicketsPage';
 import { CSRCustomersPage } from './pages/csr/CSRCustomersPage';
 import { CSROrdersPage } from './pages/csr/CSROrdersPage';
+import { KnowledgeBasePage } from './pages/csr/KnowledgeBasePage';
+
 function AppRouter() {
   const { userRole, currentPage } = useAppContext();
   // Render Login Page if not authenticated
@@ -73,6 +75,8 @@ function AppRouter() {
           return <CSRCustomersPage />;
         case 'csr-orders':
           return <CSROrdersPage />;
+        case 'csr-knowledge':
+          return <KnowledgeBasePage />;
         default:
           return <CSRDashboard />;
       }

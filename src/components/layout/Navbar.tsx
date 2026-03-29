@@ -25,7 +25,8 @@ export function Navbar() {
     logout,
     searchQuery,
     setSearchQuery,
-    currentPage
+    currentPage,
+    userRole
   } = useAppContext();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -205,7 +206,9 @@ export function Navbar() {
                     </div>
                     <button
                     onClick={() => {
-                      navigate('customer-dashboard');
+                      if (userRole === 'admin') navigate('admin-dashboard');
+                      else if (userRole === 'csr') navigate('csr-dashboard');
+                      else navigate('customer-dashboard');
                       setIsUserMenuOpen(false);
                     }}
                     className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber transition-colors">
@@ -339,7 +342,9 @@ export function Navbar() {
               <div className="border-t border-gray-100 pt-6 space-y-4">
                 <button
                 onClick={() => {
-                  navigate('customer-dashboard');
+                  if (userRole === 'admin') navigate('admin-dashboard');
+                  else if (userRole === 'csr') navigate('csr-dashboard');
+                  else navigate('customer-dashboard');
                   setIsMobileMenuOpen(false);
                 }}
                 className="flex items-center gap-3 text-navy font-medium">
