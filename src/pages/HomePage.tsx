@@ -259,7 +259,9 @@ export function HomePage() {
                     {idx + 1}
                   </span>
                   <div
-                  className={`w-16 h-24 rounded shadow-sm ${book.coverGradient} shrink-0`} />
+                  className={`w-16 h-24 rounded shadow-sm shrink-0 overflow-hidden relative ${book.coverImage ? '' : book.coverGradient}`}>
+                    {book.coverImage && <img src={book.coverImage} alt={book.title} className="w-full h-full object-cover" />}
+                  </div>
 
                   <div>
                     <h3 className="font-serif font-bold text-navy group-hover:text-amber transition-colors line-clamp-2">

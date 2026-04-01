@@ -59,18 +59,23 @@ export function BookDetailPage() {
                 transition={{
                   duration: 0.5
                 }}
-                className={`w-full max-w-sm aspect-[2/3] rounded-lg shadow-warm-lg ${book.coverGradient} relative flex items-center justify-center p-8`}>
-
-                <div className="absolute left-6 top-0 bottom-0 w-px bg-white/20" />
-                <div className="absolute left-7 top-0 bottom-0 w-px bg-black/10" />
-                <div className="text-center">
-                  <h1 className="font-serif text-white text-3xl font-bold leading-tight mb-4 drop-shadow-md">
-                    {book.title}
-                  </h1>
-                  <p className="text-white/80 font-medium tracking-widest uppercase text-sm">
-                    {book.author}
-                  </p>
-                </div>
+                className={`w-full max-w-sm aspect-[2/3] rounded-lg shadow-warm-lg relative flex items-center justify-center p-8 overflow-hidden ${book.coverImage ? 'bg-gray-100' : book.coverGradient}`}>
+                {book.coverImage ? (
+                  <img src={book.coverImage} alt={book.title} className="absolute inset-0 w-full h-full object-cover" />
+                ) : (
+                  <>
+                    <div className="absolute left-6 top-0 bottom-0 w-px bg-white/20" />
+                    <div className="absolute left-7 top-0 bottom-0 w-px bg-black/10" />
+                    <div className="text-center">
+                      <h1 className="font-serif text-white text-3xl font-bold leading-tight mb-4 drop-shadow-md">
+                        {book.title}
+                      </h1>
+                      <p className="text-white/80 font-medium tracking-widest uppercase text-sm">
+                        {book.author}
+                      </p>
+                    </div>
+                  </>
+                )}
               </motion.div>
             </div>
 

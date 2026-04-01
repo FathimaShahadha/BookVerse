@@ -180,7 +180,9 @@ export function CSROrdersPage() {
                         <td className="p-3">
                           <div className="flex items-center gap-3">
                             <div
-                              className={`w-8 h-12 rounded shadow-sm ${book.coverGradient} shrink-0`} />
+                              className={`w-8 h-12 rounded shadow-sm shrink-0 overflow-hidden relative ${book.coverImage ? '' : book.coverGradient}`}>
+                              {book.coverImage && <img src={book.coverImage} alt={book.title} className="w-full h-full object-cover" />}
+                            </div>
 
                             <span className="font-medium text-navy">
                               {book.title}

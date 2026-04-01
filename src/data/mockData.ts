@@ -18,6 +18,7 @@ export interface Book {
   language: string;
   isNew?: boolean;
   isBestseller?: boolean;
+  coverImage?: string;
 }
 
 export interface Category {

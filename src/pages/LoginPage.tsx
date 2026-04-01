@@ -10,21 +10,28 @@ import {
 'lucide-react';
 import { useAppContext, UserRole } from '../context/AppContext';
 export function LoginPage() {
-  const { loginAs } = useAppContext();
+  const { loginAs, registerAs } = useAppContext();
   const [activeTab, setActiveTab] = useState<UserRole>('customer');
-  const [email, setEmail] = useState('jane.austen@example.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState('');
+  
   const handleTabChange = (role: UserRole) => {
     setActiveTab(role);
-    if (role === 'admin') setEmail('admin@bookverse.com');else
-    if (role === 'csr') setEmail('support@bookverse.com');else
-    setEmail('jane.austen@example.com');
+    setEmail('');
+    setPassword('');
+    setName('');
   };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    loginAs(activeTab, email);
+    if (isLogin) {
+      loginAs(activeTab, email, password);
+    } else {
+      registerAs(name, email, password);
+    }
   };
   const tabs = [
   {
@@ -86,9 +93,9 @@ export function LoginPage() {
         <div className="w-full max-w-md">
           <div className="mb-8 text-center md:text-left">
             <h2 className="font-serif text-3xl font-bold text-navy mb-2">
-              Welcome back
+              {isLogin ? 'Welcome back' : 'Create an account'}
             </h2>
-            <p className="text-gray-500">Please sign in to your account.</p>
+            <p className="text-gray-500">{isLogin ? 'Please sign in to your account.' : 'Join BookVerse today.'}</p>
           </div>
 
           {/* Role Tabs */}
@@ -144,6 +151,19 @@ export function LoginPage() {
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-5">
+                {!isLogin && activeTab === 'customer' && (
+                  <div>
+                    <label className="block text-sm font-medium text-navy mb-1.5">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required={!isLogin} />
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-navy mb-1.5">
                     Email Address
@@ -202,21 +222,35 @@ export function LoginPage() {
                 </div>
 
                 <button type="submit" className="btn-primary w-full">
-                  Sign In
+                  {isLogin ? 'Sign In' : 'Sign Up'}
                 </button>
 
                 {activeTab === 'customer' &&
-                <div className="text-center mt-6">
-                    <span className="text-sm text-gray-500">
-                      Don't have an account?{' '}
-                    </span>
-                    <a
-                    href="#"
-                    className="text-sm font-medium text-amber hover:text-navy transition-colors">
-
-                      Create Account
-                    </a>
-                  </div>
+                  (isLogin ? (
+                    <div className="text-center mt-6">
+                      <span className="text-sm text-gray-500">
+                        Don't have an account?{' '}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsLogin(false)}
+                        className="text-sm font-medium text-amber hover:text-navy transition-colors">
+                        Create Account
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center mt-6">
+                      <span className="text-sm text-gray-500">
+                        Already have an account?{' '}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsLogin(true)}
+                        className="text-sm font-medium text-amber hover:text-navy transition-colors">
+                        Sign In
+                      </button>
+                    </div>
+                  ))
                 }
               </form>
             </motion.div>

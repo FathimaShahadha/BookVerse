@@ -8,9 +8,9 @@ import {
   ChevronDownIcon } from
 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { BOOKS } from '../data/mockData';
+
 export function OrderTrackingPage() {
-  const { orders, navigate } = useAppContext();
+  const { orders, navigate, books } = useAppContext();
   const [selectedOrderId, setSelectedOrderId] = useState(
     orders.length > 0 ? orders[0].id : ''
   );
@@ -209,12 +209,14 @@ export function OrderTrackingPage() {
                 </h3>
                 <div className="divide-y divide-gray-100">
                   {selectedOrder.items.map((item, idx) => {
-                  const book = BOOKS.find((b) => b.id === item.bookId);
+                  const book = books.find((b) => b.id === item.bookId);
                   if (!book) return null;
                   return (
                     <div key={idx} className="py-4 flex gap-4 items-center">
                         <div
-                        className={`w-12 h-16 rounded shadow-sm ${book.coverGradient} shrink-0`} />
+                        className={`w-12 h-16 rounded shadow-sm shrink-0 overflow-hidden relative ${book.coverImage ? '' : book.coverGradient}`}>
+                          {book.coverImage && <img src={book.coverImage} alt={book.title} className="w-full h-full object-cover" />}
+                        </div>
 
                         <div className="flex-1">
                           <p className="font-medium text-navy line-clamp-1">

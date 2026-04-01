@@ -72,20 +72,25 @@ export function BookCard({ book, index = 0, featured = false }: BookCardProps) {
 
       {/* Book Cover (Gradient Placeholder) */}
       <div
-        className={`${featured ? 'md:w-1/3 md:h-auto' : 'w-full aspect-[2/3]'} ${book.coverGradient} relative flex items-center justify-center p-6 overflow-hidden`}>
+        className={`${featured ? 'md:w-1/3 md:h-auto' : 'w-full aspect-[2/3]'} relative flex items-center justify-center p-6 overflow-hidden ${book.coverImage ? 'bg-gray-100' : book.coverGradient}`}>
+        {book.coverImage ? (
+          <img src={book.coverImage} alt={book.title} className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <>
+            {/* Decorative spine line */}
+            <div className="absolute left-4 top-0 bottom-0 w-px bg-white/20" />
+            <div className="absolute left-5 top-0 bottom-0 w-px bg-black/10" />
 
-        {/* Decorative spine line */}
-        <div className="absolute left-4 top-0 bottom-0 w-px bg-white/20" />
-        <div className="absolute left-5 top-0 bottom-0 w-px bg-black/10" />
-
-        <div className="text-center transform group-hover:scale-105 transition-transform duration-500">
-          <h3 className="font-serif text-white text-xl font-bold leading-tight mb-2 drop-shadow-md">
-            {book.title}
-          </h3>
-          <p className="text-white/80 text-sm font-medium tracking-wider uppercase">
-            {book.author}
-          </p>
-        </div>
+            <div className="text-center transform group-hover:scale-105 transition-transform duration-500">
+              <h3 className="font-serif text-white text-xl font-bold leading-tight mb-2 drop-shadow-md">
+                {book.title}
+              </h3>
+              <p className="text-white/80 text-sm font-medium tracking-wider uppercase">
+                {book.author}
+              </p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Content */}

@@ -193,7 +193,9 @@ export function AdminOrdersPage() {
                   const book = books.find(b => b.id === item.bookId);
                   return (
                   <div key={i} className="flex gap-4 p-3 border border-gray-100 rounded-xl">
-                    <div className={`w-12 h-16 ${book?.coverGradient || 'bg-gray-200'} rounded shadow-sm shrink-0 overflow-hidden`} />
+                    <div className={`w-12 h-16 rounded shadow-sm shrink-0 overflow-hidden relative ${book?.coverImage ? '' : (book?.coverGradient || 'bg-gray-200')}`}>
+                      {book?.coverImage && <img src={book.coverImage} alt={book.title} className="w-full h-full object-cover" />}
+                    </div>
                     <div className="flex-1">
                       <p className="font-bold text-navy text-sm">{book?.title || 'Unknown Book'}</p>
                       <p className="text-xs text-gray-500">{book?.author || 'Unknown Author'}</p>

@@ -11,6 +11,45 @@ export function InventoryPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
+  const [coverImageDraft, setCoverImageDraft] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  React.useEffect(() => {
+    if (editingBook) {
+      setCoverImageDraft(editingBook.coverImage || null);
+    } else if (!isAddModalOpen) {
+      setCoverImageDraft(null);
+    }
+  }, [editingBook, isAddModalOpen]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append('image', file);
+
+      try {
+        const response = await fetch('http://localhost:5000/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setCoverImageDraft(`http://localhost:5000${data.image}`);
+        } else {
+          console.error('Failed to upload image');
+          alert('Failed to upload image');
+        }
+      } catch (error) {
+        console.error('Error uploading image', error);
+        alert('Error uploading image');
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
 
   const filteredBooks = books.filter(
     (book) =>
@@ -30,6 +69,7 @@ export function InventoryPage() {
       category: formData.get('category') as string,
       availability: formData.get('availability') as 'In Stock' | 'Low Stock' | 'Out of Stock',
       isbn: formData.get('isbn') as string || `978-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+      coverImage: coverImageDraft || undefined,
     };
 
     if (editingBook) {
@@ -144,7 +184,9 @@ export function InventoryPage() {
                   <td className="p-4">
                     <div className="flex items-center gap-4">
                       <div
-                      className={`w-10 h-14 rounded shadow-sm ${book.coverGradient} shrink-0`} />
+                      className={`w-10 h-14 rounded shadow-sm shrink-0 overflow-hidden relative ${book.coverImage ? '' : book.coverGradient}`}>
+                        {book.coverImage && <img src={book.coverImage} alt={book.title} className="w-full h-full object-cover" />}
+                      </div>
 
                       <div>
                         <p className="font-bold text-navy line-clamp-1">
@@ -282,6 +324,16 @@ export function InventoryPage() {
                     <option value="Low Stock">Low Stock</option>
                     <option value="Out of Stock">Out of Stock</option>
                   </select>
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-navy mb-1">Cover Image</label>
+                  <div className="flex items-center gap-4">
+                    {coverImageDraft && (
+                      <img src={coverImageDraft} alt="Cover preview" className="w-12 h-16 object-cover rounded shadow-sm" />
+                    )}
+                    <input type="file" accept="image/*" onChange={handleImageUpload} disabled={isUploading} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-burgundy hover:file:bg-red-100 disabled:opacity-50" />
+                    {isUploading && <span className="text-sm text-gray-400">Uploading...</span>}
+                  </div>
                 </div>
               </div>
               

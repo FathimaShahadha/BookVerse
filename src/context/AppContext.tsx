@@ -1,38 +1,12 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { Book, Order, MOCK_USER, BOOKS, ORDERS, CATEGORIES, Category, Review, REVIEWS, Promotion, PROMOTIONS } from '../data/mockData';
+import axios from 'axios';
+import { Book, Order, Ticket, Category, Review, Promotion, CATEGORIES, PROMOTIONS, REVIEWS } from '../data/mockData';
 
 export interface CartItem extends Book {
   quantity: number;
 }
 
-export interface Ticket {
-  id: string;
-  priority: 'High' | 'Medium' | 'Low';
-  customer: string;
-  subject: string;
-  category: string;
-  date: string;
-  agent: string;
-  status: 'Open' | 'In Progress' | 'Resolved' | 'Closed';
-}
-
 export type UserRole = 'customer' | 'admin' | 'csr' | null;
-
-export const MOCK_ADMIN = {
-  id: 'admin1',
-  name: 'Admin Manager',
-  email: 'admin@bookverse.com',
-  role: 'admin' as const,
-  avatar: 'https://i.pravatar.cc/150?u=admin'
-};
-
-export const MOCK_CSR = {
-  id: 'csr1',
-  name: 'Support Agent',
-  email: 'support@bookverse.com',
-  role: 'csr' as const,
-  avatar: 'https://i.pravatar.cc/150?u=csr'
-};
 
 interface AppContextType {
   currentPage: string;
@@ -41,23 +15,23 @@ interface AppContextType {
   
   // Data State
   books: Book[];
-  addBook: (book: Book) => void;
-  updateBook: (id: string, updates: Partial<Book>) => void;
-  deleteBook: (id: string) => void;
+  addBook: (book: Book) => Promise<void>;
+  updateBook: (id: string, updates: Partial<Book>) => Promise<void>;
+  deleteBook: (id: string) => Promise<void>;
   
   categories: Category[];
   
   orders: Order[];
-  addOrder: (order: Order) => void;
-  updateOrderStatus: (id: string, status: Order['status']) => void;
+  addOrder: (order: Order) => Promise<void>;
+  updateOrderStatus: (id: string, status: Order['status']) => Promise<void>;
   
   promotions: Promotion[];
   reviews: Review[];
 
   // Support Tickets
   tickets: Ticket[];
-  addTicket: (ticket: Ticket) => void;
-  updateTicketStatus: (id: string, status: Ticket['status']) => void;
+  addTicket: (ticket: Ticket) => Promise<void>;
+  updateTicketStatus: (id: string, status: Ticket['status']) => Promise<void>;
 
   // Customer State
   cart: CartItem[];
@@ -80,20 +54,30 @@ interface AppContextType {
   // Auth State
   user: any | null;
   userRole: UserRole;
-  loginAs: (role: UserRole, email: string) => void;
+  loginAs: (role: UserRole, email: string, password?: string) => Promise<void>;
+  registerAs: (name: string, email: string, password?: string) => Promise<void>;
   logout: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Helper hook for localStorage
+const API_URL = 'http://localhost:5000/api';
+
+// Helper to normalize MongoDB _id to React id
+const normalizeId = (obj: any) => {
+  if (obj._id && !obj.id) {
+    obj.id = obj._id;
+  }
+  return obj;
+};
+
+// LocalStorage Hook for user local preferences like cart & wishlist
 function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((val: T) => T)) => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error);
       return initialValue;
     }
   });
@@ -112,48 +96,72 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((val
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  // Navigation & UI State (Not persisted)
+  // Navigation
   const [currentPage, setCurrentPage] = useState('login');
   const [pageParams, setPageParams] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  // Persisted Data State
-  const [books, setBooks] = useLocalStorage<Book[]>('bookverse_books', BOOKS);
-  const [categories, setCategories] = useLocalStorage<Category[]>('bookverse_categories', CATEGORIES);
-  const [orders, setOrders] = useLocalStorage<Order[]>('bookverse_orders', ORDERS);
-  const [promotions, setPromotions] = useLocalStorage<Promotion[]>('bookverse_promotions', PROMOTIONS);
-  const [reviews, setReviews] = useLocalStorage<Review[]>('bookverse_reviews', REVIEWS);
-  const [tickets, setTickets] = useLocalStorage<Ticket[]>('bookverse_tickets', [
-    {
-      id: 'T-1042',
-      priority: 'High',
-      customer: 'Jane Austen',
-      subject: 'Order not received',
-      category: 'Order Issue',
-      date: '2026-03-07',
-      agent: 'Unassigned',
-      status: 'Open'
-    },
-    {
-      id: 'T-1041',
-      priority: 'Medium',
-      customer: 'Arthur Dent',
-      subject: 'Return request',
-      category: 'Return Request',
-      date: '2026-03-07',
-      agent: 'Support Agent',
-      status: 'In Progress'
-    }
-  ]);
-  
-  // Persisted User State
+  // Static/Local Mock Data Maps (Categories, Promotions, Reviews) 
+  // You can move these to DB later, kept static to minimize rewrite scope
+  const [categories] = useState<Category[]>(CATEGORIES);
+  const [promotions] = useState<Promotion[]>(PROMOTIONS);
+  const [reviews] = useState<Review[]>(REVIEWS);
+
+  // Dynamic Data State
+  const [books, setBooks] = useState<Book[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+
+  // Auth State
   const [user, setUser] = useLocalStorage<any | null>('bookverse_user', null);
   const [userRole, setUserRole] = useLocalStorage<UserRole>('bookverse_role', null);
+  
   const [cart, setCart] = useLocalStorage<CartItem[]>('bookverse_cart', []);
-  const [wishlist, setWishlist] = useLocalStorage<Book[]>('bookverse_wishlist', [BOOKS[0], BOOKS[2]]);
+  const [wishlist, setWishlist] = useLocalStorage<Book[]>('bookverse_wishlist', []);
 
-  // Initialization check to handle refreshing on protected pages
+  // Axios interceptor for JWT Auth
+  useEffect(() => {
+    if (user && user.token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
+    } else {
+      delete axios.defaults.headers.common['Authorization'];
+    }
+  }, [user]);
+
+  // Initial Fetch Effect
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data: booksData } = await axios.get(`${API_URL}/books`);
+        setBooks(booksData.map(normalizeId));
+        
+        // If authenticated, fetch restricted content
+        if (user && userRole) {
+           if (userRole === 'admin' || userRole === 'csr') {
+               const { data: ordersData } = await axios.get(`${API_URL}/orders`, { headers: { Authorization: `Bearer ${user.token}` }});
+               setOrders(ordersData.map(normalizeId));
+               
+               const { data: ticketsData } = await axios.get(`${API_URL}/tickets`, { headers: { Authorization: `Bearer ${user.token}` }});
+               setTickets(ticketsData.map(normalizeId));
+           } else {
+               const { data: userOrders } = await axios.get(`${API_URL}/orders/myorders`, { headers: { Authorization: `Bearer ${user.token}` }});
+               setOrders(userOrders.map(normalizeId));
+               
+               const { data: userTickets } = await axios.get(`${API_URL}/tickets/mytickets`, { headers: { Authorization: `Bearer ${user.token}` }});
+               setTickets(userTickets.map(normalizeId));
+           }
+        }
+      } catch (err) {
+        console.error('API Fetch Error:', err);
+      }
+    };
+    
+    fetchData();
+  }, [userRole, user]);
+
+
+  // Routing Redirects
   useEffect(() => {
     if (userRole && currentPage === 'login') {
       if (userRole === 'admin') navigate('admin-dashboard');
@@ -162,7 +170,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Navigation limits
   const navigate = (page: string, params: any = null) => {
     setCurrentPage(page);
     setPageParams(params);
@@ -170,17 +177,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Auth Functions
-  const loginAs = (role: UserRole, email: string) => {
-    setUserRole(role);
-    if (role === 'admin') {
-      setUser(MOCK_ADMIN);
-      navigate('admin-dashboard');
-    } else if (role === 'csr') {
-      setUser(MOCK_CSR);
-      navigate('csr-dashboard');
-    } else {
-      setUser({ ...MOCK_USER, email });
+  const loginAs = async (role: UserRole, email: string, inputPassword?: string) => {
+    try {
+      // Mock Passwords as defined in our DB seeder ('admin', 'csr', 'password')
+      let password = inputPassword || 'password';
+      if (role === 'admin') password = 'admin';
+      if (role === 'csr') password = 'csr';
+
+      const { data } = await axios.post(`${API_URL}/auth/login`, { email, password });
+      
+      setUser(data);
+      setUserRole(role);
+      
+      if (role === 'admin') navigate('admin-dashboard');
+      else if (role === 'csr') navigate('csr-dashboard');
+      else navigate('home');
+    } catch (err) {
+      alert("Login Failed Check Console");
+      console.error(err);
+    }
+  };
+
+  const registerAs = async (name: string, email: string, password?: string) => {
+    try {
+      const { data } = await axios.post(`${API_URL}/auth/register`, { name, email, password: password || 'password' });
+      
+      setUser(data);
+      setUserRole('customer');
+      
       navigate('home');
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Registration Failed Check Console");
+      console.error(err);
     }
   };
 
@@ -191,24 +219,71 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     navigate('login');
   };
 
-  // Data Functions
-  const addBook = (book: Book) => setBooks((prev) => [book, ...prev]);
-  const updateBook = (id: string, updates: Partial<Book>) => {
-    setBooks(prev => prev.map(book => book.id === id ? { ...book, ...updates } : book));
-  };
-  const deleteBook = (id: string) => setBooks(prev => prev.filter(book => book.id !== id));
-
-  const addOrder = (order: Order) => setOrders((prev) => [order, ...prev]);
-  const updateOrderStatus = (id: string, status: Order['status']) => {
-    setOrders(prev => prev.map(order => order.id === id ? { ...order, status } : order));
+  // Book API Handlers
+  const addBook = async (book: Book) => {
+    try {
+      const { data } = await axios.post(`${API_URL}/books`, book);
+      setBooks((prev) => [normalizeId(data), ...prev]);
+    } catch (err) { console.error(err); }
   };
 
-  const addTicket = (ticket: Ticket) => setTickets(prev => [ticket, ...prev]);
-  const updateTicketStatus = (id: string, status: Ticket['status']) => {
-    setTickets(prev => prev.map(t => t.id === id ? { ...t, status } : t));
+  const updateBook = async (id: string, updates: Partial<Book>) => {
+    try {
+      const { data } = await axios.put(`${API_URL}/books/${id}`, updates);
+      setBooks(prev => prev.map(b => b.id === id ? normalizeId(data) : b));
+    } catch (err) { console.error(err); }
   };
 
-  // Cart Functions
+  const deleteBook = async (id: string) => {
+    try {
+      await axios.delete(`${API_URL}/books/${id}`);
+      setBooks(prev => prev.filter(b => b.id !== id));
+    } catch (err) { console.error(err); }
+  };
+
+  // Order API Handlers
+  const addOrder = async (order: Order) => {
+    try {
+      const { data } = await axios.post(`${API_URL}/orders`, order);
+      setOrders(prev => [normalizeId(data), ...prev]);
+    } catch (err) { console.error(err); }
+  };
+
+  const updateOrderStatus = async (id: string, status: Order['status']) => {
+    try {
+      const { data } = await axios.put(`${API_URL}/orders/${id}/status`, { status });
+      setOrders(prev => prev.map(o => o.id === id ? normalizeId(data) : o));
+    } catch (err) { console.error(err); }
+  };
+
+  // Ticket API Handlers
+  const addTicket = async (ticket: Ticket) => {
+    try {
+       // Mapping ticket to schema
+       const payload = {
+         subject: ticket.subject,
+         category: ticket.category,
+         priority: ticket.priority,
+         message: "Initial Ticket Creation" // Assuming messages flow handles true initial body
+       };
+       const { data } = await axios.post(`${API_URL}/tickets`, payload);
+       setTickets(prev => [normalizeId(data), ...prev]);
+    } catch (err) { console.error(err); }
+  };
+
+  const updateTicketStatus = async (id: string, status: Ticket['status']) => {
+    try {
+      // Tickets use message append route to update status, or standard direct update.
+      // We send a generic status update message.
+      const { data } = await axios.post(`${API_URL}/tickets/${id}/messages`, {
+          text: `Status changed to ${status}`,
+          status
+      });
+      setTickets(prev => prev.map(t => t.id === id ? normalizeId({ ...t, status }) : t));
+    } catch (err) { console.error(err); }
+  };
+
+  // Cart Functions (Remains LocalStorage)
   const addToCart = (book: Book, quantity: number = 1) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.id === book.id);
@@ -267,7 +342,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         searchQuery, setSearchQuery,
         selectedCategory, setSelectedCategory,
         
-        user, userRole, loginAs, logout
+        user, userRole, loginAs, registerAs, logout
       }}
     >
       {children}

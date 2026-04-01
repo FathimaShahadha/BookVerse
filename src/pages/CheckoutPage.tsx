@@ -435,7 +435,9 @@ export function CheckoutPage() {
                     className="p-4 flex items-center gap-4">
 
                         <div
-                      className={`w-12 h-16 rounded shadow-sm ${item.coverGradient} shrink-0`} />
+                      className={`w-12 h-16 rounded shadow-sm shrink-0 overflow-hidden relative ${item.coverImage ? '' : item.coverGradient}`}>
+                        {item.coverImage && <img src={item.coverImage} alt={item.title} className="w-full h-full object-cover" />}
+                      </div>
 
                         <div className="flex-1">
                           <h4 className="font-medium text-navy line-clamp-1">

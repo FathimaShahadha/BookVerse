@@ -11,17 +11,22 @@ export function CartItem({ item }: CartItemProps) {
     <div className="flex flex-col sm:flex-row gap-4 py-6 border-b border-gray-100 bg-white p-4 rounded-xl shadow-sm mb-4">
       {/* Book Cover Thumbnail */}
       <div
-        className={`w-24 h-36 shrink-0 rounded-md shadow-sm ${item.coverGradient} flex items-center justify-center p-2 cursor-pointer relative overflow-hidden`}
+        className={`w-24 h-36 shrink-0 rounded-md shadow-sm flex items-center justify-center p-2 cursor-pointer relative overflow-hidden ${item.coverImage ? 'bg-gray-100' : item.coverGradient}`}
         onClick={() =>
         navigate('book-detail', {
           bookId: item.id
         })
         }>
-
-        <div className="absolute left-2 top-0 bottom-0 w-px bg-white/20" />
-        <span className="font-serif text-white text-xs text-center font-bold drop-shadow-md line-clamp-3">
-          {item.title}
-        </span>
+        {item.coverImage ? (
+          <img src={item.coverImage} alt={item.title} className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <>
+            <div className="absolute left-2 top-0 bottom-0 w-px bg-white/20" />
+            <span className="font-serif text-white text-xs text-center font-bold drop-shadow-md line-clamp-3">
+              {item.title}
+            </span>
+          </>
+        )}
       </div>
 
       {/* Details */}
